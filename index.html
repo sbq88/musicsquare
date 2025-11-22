@@ -1624,8 +1624,8 @@
           singer: raw.singer || raw.artist || raw.artists || item.singer,
           cover: raw.cover || raw.pic || raw.picUrl || null,
           music_url: raw.url || raw.music_url || raw.music || raw.play_url || null,
-          lrc_url: raw.lrc_url || raw.lrc || raw.lyric || null,
-          lrc: raw.lrc_text || null,
+          lrc_url: raw.lrc_url || raw.lrc || null,
+          lrc: raw.lyric || raw.lrc_text || null,
           link: raw.page || raw.link || raw.page_url || null
         };
 
