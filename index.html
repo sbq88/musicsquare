@@ -1810,7 +1810,7 @@
 
     // QQ 搜索
     async function searchQQ(kw, limit){
-      const url=`https://music-dl.sayqz.com/api?&type=search&keyword=${encodeURIComponent(kw)}&source=qq&limit=${encodeURIComponent(limit)}`;
+      const url=`https://api.baka.plus/meting/?server=tencent&type=search&id=0&yrc=false&keyword=${encodeURIComponent(kw)}&source=qq&limit=${encodeURIComponent(limit)}`;
       let added=0;
       try{
         const res=await fetch(url);
