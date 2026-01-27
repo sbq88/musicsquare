@@ -1811,6 +1811,8 @@
     // QQ 搜索：使用咸鱼 QQ 音乐搜索 API（只拿列表，不拿 url）
     async function searchQQ(kw, limit){
       const QQ_API_KEY = 'sk-62cdb03e2270eb3968cca7881399f412';
+
+      // 搜索接口：不带 n，返回 data 为数组
       const url =
         `https://apii.xianyuw.cn/api/v1/qq-music-search` +
         `?key=${encodeURIComponent(QQ_API_KEY)}` +
@@ -1822,25 +1824,34 @@
         const res = await fetch(url);
         const json = await res.json();
 
-        // 新接口：code === 200 且 data 为数组
         if (json.code !== 200 || !Array.isArray(json.data)) return 0;
 
-        // 前端自己做 limit 截断
+        // 按 limit 截断
         const list = json.data.slice(0, limit || json.data.length);
 
         list.forEach((it, idx) => {
           const uid = `qq-${it.id}`;
           if (state.trackMap.has(uid)) return;
 
+          const indexInList = idx + 1;  // 1-based，用来作为 n
+
           const track = {
             uid,
             source: 'qq',
-            displayIndex: idx + 1,
-            keyword: kw,
 
-            // 方便后面根据 id 再检索（如果接口支持的话）
+            // 用于交叉插入的序号
+            displayIndex: indexInList,
+
+            // 记录检索关键词（后面详情请求要用同样的 msg）
+            keyword: kw,
+            qqSearchKey: kw,
+
+            // 记录在搜索列表中的第几首，对应接口里的 n
+            qqIndex: indexInList,
+
+            // 一些元信息
             qqId: it.id,
-            songid: it.id,   // 保留旧字段名，防止其它地方万一用到
+            songid: it.id, // 保留旧字段名，避免其它地方用到
 
             title: it.title || '',
             artist: it.author || '',
@@ -1848,7 +1859,8 @@
 
             cover: it.cover || null,
 
-            audioUrl: null,   // 搜索阶段不返回 url
+            // 搜索阶段没有 url 和 lrc
+            audioUrl: null,
             lrc: null,
             lrcUrl: null,
 
@@ -2036,21 +2048,27 @@
       track.detailsLoaded=true;
     }
 
-    // QQ 详情（播放时再请求一次，拿 url + lrc）
+    // QQ 详情：根据「搜索时的关键词 + 搜索结果中的序号 qqIndex」来拿 url + lrc
     async function fetchQQDetails(track){
       const QQ_API_KEY = 'sk-62cdb03e2270eb3968cca7881399f412';
 
-      // 尽量用「歌名 + 歌手」检索，匹配度更高
-      const keywordCombined =
-        ((track.title || '') + ' ' + (track.artist || '')).trim() ||
-        track.keyword ||
-        '';
+      // 优先用搜索时的关键词（保证排序一致），兜底用 标题+歌手
+      const msg =
+        (track.qqSearchKey || track.keyword || '').trim() ||
+        ((track.title || '') + ' ' + (track.artist || '')).trim();
+
+      // 第几首：来自 searchQQ 里写入的 qqIndex，兜底 displayIndex，再兜底 1
+      const n =
+        track.qqIndex ||
+        track.displayIndex ||
+        1;
 
       const url =
         `https://apii.xianyuw.cn/api/v1/qq-music-search` +
         `?key=${encodeURIComponent(QQ_API_KEY)}` +
-        `&msg=${encodeURIComponent(keywordCombined)}` +
-        `&n=1&br=hires&no_url=0`;
+        `&msg=${encodeURIComponent(msg)}` +
+        `&n=${encodeURIComponent(n)}` +
+        `&br=hires&no_url=0`;
 
       try {
         const res = await fetch(url);
@@ -2061,17 +2079,19 @@
 
         const d = json.data;
 
-        // 基本信息更新一下
-        track.title  = d.title  || track.title;
-        track.artist = d.author || track.artist;
-        track.cover  = d.cover  || track.cover;
-        track.pageUrl = d.link  || track.pageUrl;
+        // 更新基础信息
+        track.title   = d.title  || track.title;
+        track.artist  = d.author || track.artist;
+        track.cover   = d.cover  || track.cover;
+        track.pageUrl = d.link   || track.pageUrl;
 
         // 播放链接 + 歌词
-        track.audioUrl = d.url  || track.audioUrl;
-        track.lrc      = d.lrc  || track.lrc;
+        track.audioUrl = d.url || track.audioUrl;
+        track.lrc      = d.lrc || track.lrc;
 
-        // 先根据 quality 字段粗略判断一下音质
+        track.qqQualityText = d.quality || track.qqQualityText;
+
+        // 根据 quality 字段粗略推断
         if (d.quality) {
           if (/hires|无损|flac|ape|wav/i.test(d.quality)) {
             track.quality = 'lossless';
@@ -2082,18 +2102,21 @@
           }
         }
 
-        // 再用链接的后缀兜底判断一次
-        if (track.audioUrl && !track.qualityLabel) {
+        // 再用 url 后缀兜底判断音质（你脚本里已有 inferQualityFromUrl）
+        if (track.audioUrl) {
           const q = inferQualityFromUrl(track.audioUrl);
-          track.quality = q.tag;
-          track.qualityLabel = q.label;
+          if (q && q.label) {
+            track.quality = q.tag;
+            track.qualityLabel = q.label;
+          }
         }
+
+        track.detailsLoaded = true;
 
       } catch (e) {
         console.error('qq detail (xianyuw)', e);
+        // 失败时不要把 detailsLoaded 置 true，这样下次还有机会重试
       }
-
-      track.detailsLoaded = true;
     }
 
     async function fetchKuwoDetails(track){
