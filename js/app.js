@@ -445,7 +445,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // 如果是多源搜索且选择了 3 个源，调用聚合搜索接口
             if (state.isMultiSource && state.searchActiveSources.length === 3) {
-                merged = await MusicAPI.aggregateSearch(state.globalKeyword, searchSignal);
+                merged = await MusicAPI.aggregateSearch(state.globalKeyword, state.searchPage, searchSignal);
             } else {
                 // 如果是单源或 2 个源，分别调用
                 // Initial search: 100 results, subsequent scroll: 20 more

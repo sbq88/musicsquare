@@ -984,7 +984,7 @@ const UI = {
         });
 
         this._onLoadMore = onMore;
-        if (window.player && window.player.currentTrack) this.highlightPlayingByID(window.player.currentTrack.id, window.player.currentTrack.uid);
+        if (window.player && window.player.currentTrack) this.highlightPlayingByID(window.player.currentTrack.id, window.player.currentTrack.uid, !isAppend);
     },
 
     toggleFavorite(song, btnEl) {
@@ -1050,7 +1050,7 @@ const UI = {
         };
     },
 
-    highlightPlayingByID(id, uid) {
+    highlightPlayingByID(id, uid, shouldScroll = true) {
         if (!id && !uid) return false;
         const container = this.songListContainer || document;
         const items = container.querySelectorAll('.song-item');
@@ -1069,9 +1069,11 @@ const UI = {
 
         if (matchEl) {
             // Small delay to ensure layout is settled
-            setTimeout(() => {
-                matchEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 50);
+            if (shouldScroll) {
+                setTimeout(() => {
+                    matchEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 50);
+            }
             return true;
         }
         return false;

@@ -298,15 +298,15 @@ const MusicAPI = {
         });
     },
 
-    async aggregateSearch(keyword, signal = null) {
+    async aggregateSearch(keyword, page = 1, signal = null) {
         if (!keyword) return [];
 
         const TIMEOUT = 15000; // 每个平台 15s 超时
 
         const searchPromises = [
-            this.timeoutPromise(this.search(keyword, 'netease', 1, 10, signal), TIMEOUT),
-            this.timeoutPromise(this.search(keyword, 'qq', 1, 10, signal), TIMEOUT),
-            this.timeoutPromise(this.search(keyword, 'kuwo', 1, 10, signal), TIMEOUT)
+            this.timeoutPromise(this.search(keyword, 'netease', page, 10, signal), TIMEOUT),
+            this.timeoutPromise(this.search(keyword, 'qq', page, 10, signal), TIMEOUT),
+            this.timeoutPromise(this.search(keyword, 'kuwo', page, 10, signal), TIMEOUT)
         ];
 
         try {
