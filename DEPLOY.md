@@ -24,7 +24,7 @@
     *   点击左侧 **Workers & Pages** -> **Overview** -> **Create Application**。
     *   点击 **Create Worker** -> 名字随便填 (例如 `pikachu-music`) -> **Deploy**。
     *   点击 **Edit code** 进入在线编辑器。
-    *   **重点**：打开本地 `backend/worker.js`，全选复制，**覆盖** 在线编辑器里的所有代码，点击右上角 **Save and Deploy**。
+    *   **重点**：打开本地 `backend/worker.js`，全选复制，**覆盖** 在线编辑器里的所有代码，记得修改白名单！！不然调用不了，点击右上角 **Save and Deploy**。
 
 4.  **绑定数据库与变量**
     *   回到 Worker 的详情页 (Settings)。
